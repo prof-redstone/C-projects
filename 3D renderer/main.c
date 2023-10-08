@@ -7,13 +7,14 @@
 
 
 #define Xsize 130
-#define Ysize 40
+#define Ysize 30
 #define PI 3.1415926535
 #define Msize 8
 
 
 float pixel(float x, float y , int time);
-void renderArray(float* a);
+void renderArray1(float* a);
+void renderArray2(float* a);
 int clamp(int x,int a, int b);
 float mod(float x, float a);
 float ball(float x, float y , int time);
@@ -23,6 +24,7 @@ float game(float x, float y , int time, int map[], float pos[], float angle);
 
 void main(){
     int time = 0;
+    int freq = 500;
 
     int map[] = {
                 1,1,1,1,1,1,1,1,
@@ -37,7 +39,7 @@ void main(){
 
     float pos[] = {2.5,2.5};
     float angle = 0;
-    float delta = 0.2;
+    float delta = 0.4;
     float speed = 0.15*delta;
     float rotSpeed = 0.15*delta;
 
@@ -72,9 +74,9 @@ void main(){
                 //arrayImage[i*Xsize + j] = pixel(((float)j) / Xsize, ((float)i) / Ysize, time);
             }            
         }
-        renderArray(arrayImage);
+        renderArray1(arrayImage);
         time++;
-        usleep(5000);
+        usleep(freq);
     }
     return;
 }
@@ -197,12 +199,9 @@ float degrade(float x, float y , int time){
 }
 
 
+void renderArray2(float* a){
 
-
-void renderArray(float* a){
-
-
-    char *arraychar = (char*)malloc(Ysize * Xsize * sizeof(char));
+    char *arraychar = (char*)malloc((Ysize * Xsize +1) * sizeof(char));
     for (int i = 0; i < Ysize*Xsize; i++) {
         if(i%Xsize==0){
             arraychar[i] = 10;
@@ -210,21 +209,25 @@ void renderArray(float* a){
             arraychar[i] = " .-:,~=;!vw#$@"[clamp((int)(a[i]*14), 0, 13)];        
         }
     }
-    //system("cls");
+    arraychar[Ysize * Xsize] = '\0';
+    
     printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     printf(arraychar);
+    return;
+}
+
+void renderArray1(float* a){
 
 
-    //printf("\x1b[H");
-    //system("cls");
-    //for(int k = 0; k < Ysize*Xsize; k++) {
-    //    if(k%Xsize==0){
-    //        putchar(10);
-    //    }
-    //    char c = " .-:,~=;!vw#$@"[clamp((int)(a[k]*14), 0, 13)];
-    //    putchar(c);
-    //}
-    //return;
+    printf("\x1b[H");
+    for(int k = 0; k < Ysize*Xsize; k++) {
+       if(k%Xsize==0){
+           putchar(10);
+       }
+       char c = " .-:,~=;!vw#$@"[clamp((int)(a[k]*14), 0, 13)];
+       putchar(c);
+    }
+    return;
 }
 
 float mod(float x, float a){
