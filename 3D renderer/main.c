@@ -6,8 +6,8 @@
 #include <windows.h>
 
 
-#define Xsize 100
-#define Ysize 30
+#define Xsize 130
+#define Ysize 40
 #define PI 3.1415926535
 #define Msize 8
 
@@ -31,14 +31,15 @@ void main(){
                 1,0,0,0,0,0,1,1,
                 1,0,1,1,0,0,0,1,
                 1,0,0,1,0,0,0,1,
-                1,0,0,1,0,0,0,1,
+                1,0,0,1,0,0,1,1,
                 1,1,1,1,1,1,1,1,
                 };
 
     float pos[] = {2.5,2.5};
     float angle = 0;
-    float speed = 0.15;
-    float rotSpeed = 0.15;
+    float delta = 0.2;
+    float speed = 0.15*delta;
+    float rotSpeed = 0.15*delta;
 
 
     printf("\x1b[2J");//for the renderer
@@ -199,15 +200,31 @@ float degrade(float x, float y , int time){
 
 
 void renderArray(float* a){
-    printf("\x1b[H");
-    for(int k = 0; k < Ysize*Xsize; k++) {
-        if(k%Xsize==0){
-            putchar(10);
+
+
+    char *arraychar = (char*)malloc(Ysize * Xsize * sizeof(char));
+    for (int i = 0; i < Ysize*Xsize; i++) {
+        if(i%Xsize==0){
+            arraychar[i] = 10;
+        }else{
+            arraychar[i] = " .-:,~=;!vw#$@"[clamp((int)(a[i]*14), 0, 13)];        
         }
-        char c = " .-:,~=;!vw#$@"[clamp((int)(a[k]*14), 0, 13)];
-        putchar(c);
     }
-    return;
+    //system("cls");
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    printf(arraychar);
+
+
+    //printf("\x1b[H");
+    //system("cls");
+    //for(int k = 0; k < Ysize*Xsize; k++) {
+    //    if(k%Xsize==0){
+    //        putchar(10);
+    //    }
+    //    char c = " .-:,~=;!vw#$@"[clamp((int)(a[k]*14), 0, 13)];
+    //    putchar(c);
+    //}
+    //return;
 }
 
 float mod(float x, float a){
