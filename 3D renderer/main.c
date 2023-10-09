@@ -6,58 +6,83 @@
 #include <windows.h>
 
 
-#define Xsize 130
-#define Ysize 30
 #define PI 3.1415926535
-#define Msize 8
 
-
+float* resetScreen(int Xsize, int Ysize);
 float pixel(float x, float y , int time);
-void renderArray1(float* a);
-void renderArray2(float* a);
+void renderArray1(float* a, int Ysize, int Xsize);
+void renderArray2(float* a, int Ysize, int Xsize);
 int clamp(int x,int a, int b);
 float mod(float x, float a);
 float ball(float x, float y , int time);
 float degrade(float x, float y , int time);
-float rayMarching(float x, float y , int time);
-float game(float x, float y , int time, int map[], float pos[], float angle);
+float game(float x, float y , int time, int map[], int Msize, float pos[], float angle);
 
 void main(){
     int time = 0;
-    int freq = 500;
+    int freq = 5000;
+    int Ysize = 40;
+    int Xsize = 140;
+    int renderType = 1;
 
+    int Msize = 14;
     int map[] = {
-                1,1,1,1,1,1,1,1,
-                1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,1,
-                1,0,1,1,0,0,0,1,
-                1,0,0,1,0,0,0,1,
-                1,0,0,1,0,0,1,1,
-                1,1,1,1,1,1,1,1,
+                1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                1,0,0,0,0,0,0,1,0,0,0,0,0,1,
+                1,0,0,0,0,0,0,1,0,0,0,0,0,1,
+                1,0,0,0,0,0,1,1,1,0,0,0,0,1,
+                1,0,1,1,0,0,0,0,0,0,0,0,0,1,
+                1,0,0,1,0,0,0,0,0,0,0,0,0,1,
+                1,0,0,1,0,0,1,0,0,0,0,0,0,1,
+                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+                1,0,0,1,0,0,1,1,1,0,0,1,1,1,
+                1,0,0,1,0,0,1,0,0,0,0,0,0,1,
+                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+                1,1,1,1,1,1,1,1,1,1,1,1,1,1,
                 };
 
     float pos[] = {2.5,2.5};
     float angle = 0;
-    float delta = 0.4;
+    float delta = 0.2;
     float speed = 0.15*delta;
     float rotSpeed = 0.15*delta;
 
-
-    printf("\x1b[2J");//for the renderer
-    float *arrayImage = (float*)malloc(Ysize * Xsize * sizeof(float));
-    for (int i = 0; i < Ysize*Xsize; i++) {
-        arrayImage[i] = 0.;        
-    }
+    float* arrayImage = resetScreen(Xsize, Ysize);
 
     
     while (1) {
+
+        if(GetAsyncKeyState(65)){
+            Xsize += 1;
+            free(arrayImage);
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
+
+        if(GetAsyncKeyState(81)){
+            Xsize -= 1;
+            free(arrayImage);
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
+
+        if(GetAsyncKeyState(90)){
+            Ysize += 1;
+            free(arrayImage);
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
+
+        if(GetAsyncKeyState(83)){
+            Ysize -= 1;
+            free(arrayImage);
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
         
         if(GetAsyncKeyState(VK_LEFT)){
-            angle += rotSpeed;
+            angle -= rotSpeed;
         }
         if(GetAsyncKeyState(VK_RIGHT)){
-            angle -= rotSpeed;
+            angle += rotSpeed;
         }
         if(GetAsyncKeyState(VK_UP)){
             pos[0] += cos(angle)*speed;
@@ -70,30 +95,42 @@ void main(){
 
         for (int i = 0; i < Ysize; i++){
             for (int j = 0; j < Xsize; j++){
-                arrayImage[i*Xsize + j] = game(((float)j) / Xsize, ((float)i) / Ysize, time, map, pos, angle);
+                arrayImage[i*Xsize + j] = game(((float)j) / Xsize, ((float)i) / Ysize, time, map, Msize, pos, angle);
                 //arrayImage[i*Xsize + j] = pixel(((float)j) / Xsize, ((float)i) / Ysize, time);
             }            
         }
-        renderArray1(arrayImage);
+        if(renderType == 1){
+            renderArray1(arrayImage, Ysize, Xsize);
+        }
+        if(renderType == 2){
+            renderArray2(arrayImage, Ysize, Xsize);
+        }
         time++;
         usleep(freq);
     }
+
+    free(arrayImage);
     return;
 }
 
-float rayMarching(float x, float y , int time){
-    return 0;
+float* resetScreen(int Xsize, int Ysize){
+    printf("\x1b[2J");//for the renderer
+    float* arr = (float*)malloc(Ysize * Xsize * sizeof(float));
+    for (int i = 0; i < Ysize*Xsize; i++) {
+        arr[i] = 0.;        
+    }
+    return arr;
 }
 
 float pixel(float x, float y , int time){
     return degrade(x,y,time);
 }
 
-float game(float x, float y , int time, int map[], float pos[], float angle){
+float game(float x, float y , int time, int map[], int Msize, float pos[], float angle){
     float x0 = pos[0];
     float y0 = pos[1];
     float FOV = 1.5;
-    float ang = angle -(x-0.5)*FOV;
+    float ang = angle +(x-0.5)*FOV;
     float xDir = cos(ang);
     float yDir = sin(ang);
     float xUnitStepSize = sqrt(1 + (yDir/xDir)*(yDir/xDir) );
@@ -154,13 +191,13 @@ float game(float x, float y , int time, int map[], float pos[], float angle){
     float col = 0;
     if(xIntersect - floor(xIntersect) < 0.0001 || xIntersect - ceil(xIntersect) > -0.0001){
         if(xDir>0){
-            col = 0.4;
+            col = 0.7;
         }else{
             col = 0.7;
         }
     }else{
         if(yDir>0){
-            col = 0.1;
+            col = 0.9;
         }else{
             col = 0.9;
         }
@@ -199,7 +236,7 @@ float degrade(float x, float y , int time){
 }
 
 
-void renderArray2(float* a){
+void renderArray2(float* a, int Ysize, int Xsize){
 
     char *arraychar = (char*)malloc((Ysize * Xsize +1) * sizeof(char));
     for (int i = 0; i < Ysize*Xsize; i++) {
@@ -216,17 +253,18 @@ void renderArray2(float* a){
     return;
 }
 
-void renderArray1(float* a){
-
-
+void renderArray1(float* a,int Ysize,int Xsize){
     printf("\x1b[H");
-    for(int k = 0; k < Ysize*Xsize; k++) {
-       if(k%Xsize==0){
-           putchar(10);
-       }
-       char c = " .-:,~=;!vw#$@"[clamp((int)(a[k]*14), 0, 13)];
-       putchar(c);
+    char *arraychar = (char*)malloc((Ysize * Xsize +1) * sizeof(char));
+    for (int i = 0; i < Ysize*Xsize; i++) {
+        if(i%Xsize==0){
+            arraychar[i] = 10;
+        }else{
+            arraychar[i] = " .-:,~=;!vw#$@"[clamp((int)(a[i]*14), 0, 13)];        
+        }
     }
+    arraychar[Ysize * Xsize] = '\0';
+    printf(arraychar);
     return;
 }
 
