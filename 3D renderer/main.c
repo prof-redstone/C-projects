@@ -8,6 +8,7 @@
 
 #define PI 3.1415926535
 
+void genMase(int** mase, int size);
 float* resetScreen(int Xsize, int Ysize);
 float pixel(float x, float y , int time);
 void renderArray1(float* a, int Ysize, int Xsize);
@@ -26,22 +27,28 @@ void main(){
     int renderType = 1;
 
     int Msize = 14;
-    int map[] = {
-                1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                1,0,0,0,0,0,0,1,0,0,0,0,0,1,
-                1,0,0,0,0,0,0,1,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,1,1,0,0,0,0,1,
-                1,0,1,1,0,0,0,0,0,0,0,0,0,1,
-                1,0,0,1,0,0,0,0,0,0,0,0,0,1,
-                1,0,0,1,0,0,1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-                1,0,0,1,0,0,1,1,1,0,0,1,1,1,
-                1,0,0,1,0,0,1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-                1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-                1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-                };
+    int* map;
+    genMase(&map, Msize);
+    for (int i = 0; i < 2; i++)
+    {
+        map[i]=1;
+    }
+    // int map[] = {
+    //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,1,1,1,0,0,0,0,1,
+    //             1,0,1,1,0,0,0,0,0,0,0,0,0,1,
+    //             1,0,0,1,0,0,0,0,0,0,0,0,0,1,
+    //             1,0,0,1,0,0,1,0,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+    //             1,0,0,1,0,0,1,1,1,0,0,1,1,1,
+    //             1,0,0,1,0,0,1,0,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
+    //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+    //             };
 
     float pos[] = {2.5,2.5};
     float angle = 0;
@@ -77,6 +84,15 @@ void main(){
             free(arrayImage);
             arrayImage = resetScreen(Xsize,Ysize);
         }
+
+        if(GetAsyncKeyState(80)){//p     
+            renderType = 2;      
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
+        if(GetAsyncKeyState(79)){//o
+            renderType = 1;          
+            arrayImage = resetScreen(Xsize,Ysize);
+        }
         
         if(GetAsyncKeyState(VK_LEFT)){
             angle -= rotSpeed;
@@ -110,7 +126,19 @@ void main(){
     }
 
     free(arrayImage);
+    free(map);
     return;
+}
+
+void genMase(int** map, int size){
+    //free(*map);
+    *map = (int*)malloc(sizeof(int)*size*size);
+    for (int i = 0; i < size; i++){
+        for (int j = 0; j < size; j++){
+            (*map)[i*size + j] = 0;
+        }
+    }
+    return;    
 }
 
 float* resetScreen(int Xsize, int Ysize){
