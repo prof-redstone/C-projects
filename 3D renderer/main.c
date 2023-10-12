@@ -2,13 +2,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include <conio.h>
 #include <windows.h>
 
 
 #define PI 3.1415926535
 
-void genMase(int** mase, int size);
+void genMase(int* mase, int size);
 float* resetScreen(int Xsize, int Ysize);
 float pixel(float x, float y , int time);
 void renderArray1(float* a, int Ysize, int Xsize);
@@ -20,6 +19,7 @@ float degrade(float x, float y , int time);
 float game(float x, float y , int time, int map[], int Msize, float pos[], float angle);
 
 void main(){
+    printf("start");
     int time = 0;
     int freq = 5000;
     int Ysize = 40;
@@ -27,12 +27,8 @@ void main(){
     int renderType = 1;
 
     int Msize = 14;
-    int* map;
-    genMase(&map, Msize);
-    for (int i = 0; i < 2; i++)
-    {
-        map[i]=1;
-    }
+    int map[Msize*Msize];
+    genMase(map, Msize);
     // int map[] = {
     //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
@@ -50,7 +46,8 @@ void main(){
     //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     //             };
 
-    float pos[] = {2.5,2.5};
+    float pos[] = {0.5,0.5};
+    float lastpos[] = {0.5,0.5};
     float angle = 0;
     float delta = 0.2;
     float speed = 0.15*delta;
@@ -87,10 +84,12 @@ void main(){
 
         if(GetAsyncKeyState(80)){//p     
             renderType = 2;      
+            free(arrayImage);
             arrayImage = resetScreen(Xsize,Ysize);
         }
         if(GetAsyncKeyState(79)){//o
             renderType = 1;          
+            free(arrayImage);
             arrayImage = resetScreen(Xsize,Ysize);
         }
         
@@ -107,6 +106,15 @@ void main(){
         if(GetAsyncKeyState(VK_DOWN)){
             pos[0] -= cos(angle)*speed;
             pos[1] -= sin(angle)*speed;
+        }
+
+        //colision
+        if(map[((int)floor(pos[1]))*Xsize + ((int)floor(pos[0]))] == 1){
+            pos[0] = lastpos[0];
+            pos[1] = lastpos[1];
+        }else{
+            lastpos[0] = pos[0];
+            lastpos[1] = pos[1];
         }
 
         for (int i = 0; i < Ysize; i++){
@@ -126,16 +134,17 @@ void main(){
     }
 
     free(arrayImage);
-    free(map);
     return;
 }
 
-void genMase(int** map, int size){
-    //free(*map);
-    *map = (int*)malloc(sizeof(int)*size*size);
+void genMase(int* map, int size){
     for (int i = 0; i < size; i++){
         for (int j = 0; j < size; j++){
-            (*map)[i*size + j] = 0;
+            if(i%2 == 0 && j%2 ==0){
+                map[i*size + j] = 1;
+            }else{
+                map[i*size + j] = 0;
+            }
         }
     }
     return;    
@@ -205,6 +214,8 @@ float game(float x, float y , int time, int map[], int Msize, float pos[], float
             if(map[yMapCheck*Msize + xMapCheck] == 1){
                 found = 1;
             }
+        }else{
+            found = 1;
         }
         
     }
