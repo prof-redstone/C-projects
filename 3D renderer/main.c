@@ -6,9 +6,11 @@
 
 
 #define PI 3.1415926535
+#define seed 1
 
+void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize);
 void genMase(int* mase, int size);
-float* resetScreen(int Xsize, int Ysize);
+float* resetScreen(int Xsize, int Ysize, int renderType);
 float pixel(float x, float y , int time);
 void renderArray1(float* a, int Ysize, int Xsize);
 void renderArray2(float* a, int Ysize, int Xsize);
@@ -19,16 +21,17 @@ float degrade(float x, float y , int time);
 float game(float x, float y , int time, int map[], int Msize, float pos[], float angle);
 
 void main(){
-    printf("start");
     int time = 0;
     int freq = 5000;
     int Ysize = 40;
     int Xsize = 140;
-    int renderType = 1;
+    int renderType = 4;
 
     int Msize = 14;
     int map[Msize*Msize];
     genMase(map, Msize);
+    map[0] = 0;
+
     // int map[] = {
     //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
     //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
@@ -53,7 +56,7 @@ void main(){
     float speed = 0.15*delta;
     float rotSpeed = 0.15*delta;
 
-    float* arrayImage = resetScreen(Xsize, Ysize);
+    float* arrayImage = resetScreen(Xsize, Ysize, renderType);
 
     
     while (1) {
@@ -61,36 +64,36 @@ void main(){
         if(GetAsyncKeyState(65)){
             Xsize += 1;
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
 
         if(GetAsyncKeyState(81)){
             Xsize -= 1;
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
 
         if(GetAsyncKeyState(90)){
             Ysize += 1;
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
 
         if(GetAsyncKeyState(83)){
             Ysize -= 1;
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
 
         if(GetAsyncKeyState(80)){//p     
             renderType = 2;      
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
         if(GetAsyncKeyState(79)){//o
             renderType = 1;          
             free(arrayImage);
-            arrayImage = resetScreen(Xsize,Ysize);
+            arrayImage = resetScreen(Xsize,Ysize, renderType);
         }
         
         if(GetAsyncKeyState(VK_LEFT)){
@@ -108,14 +111,8 @@ void main(){
             pos[1] -= sin(angle)*speed;
         }
 
-        //colision
-        if(map[((int)floor(pos[1]))*Xsize + ((int)floor(pos[0]))] == 1){
-            pos[0] = lastpos[0];
-            pos[1] = lastpos[1];
-        }else{
-            lastpos[0] = pos[0];
-            lastpos[1] = pos[1];
-        }
+        //collision
+        collision(&pos[0],&pos[1],&lastpos[0],&lastpos[1],map, Msize);
 
         for (int i = 0; i < Ysize; i++){
             for (int j = 0; j < Xsize; j++){
@@ -129,6 +126,21 @@ void main(){
         if(renderType == 2){
             renderArray2(arrayImage, Ysize, Xsize);
         }
+        if(renderType == 3){
+            printf("\n\n\n\n");
+            for (int i = 0; i < Msize; i++)
+            {
+                for (int j = 0; j < Msize; j++)
+                {
+                    printf("%d",map[i*Msize + j]);
+                }
+                printf("\n");
+            }
+            
+        }
+        if(renderType == 4){
+            //debug
+        }
         time++;
         usleep(freq);
     }
@@ -137,21 +149,96 @@ void main(){
     return;
 }
 
+void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize){
+    if(0 <= (int)floor(*px) && (int)floor(*px) < Msize && 0 <= (int)floor(*py) && (int)floor(*py) < Msize){
+        if(map[((int)floor(*py))*Msize + ((int)floor(*px))] != 1){
+            *lpx = *px;
+            *lpy = *py;
+            return;
+        }
+    }
+    *px = *lpx;
+    *py = *lpy;
+    return;
+}
+
 void genMase(int* map, int size){
     for (int i = 0; i < size; i++){
         for (int j = 0; j < size; j++){
             if(i%2 == 0 && j%2 ==0){
-                map[i*size + j] = 1;
-            }else{
                 map[i*size + j] = 0;
+            }else{
+                map[i*size + j] = 1;
             }
         }
     }
+
+    int px = 0;
+    int py = 0;
+    int counter = 1;
+    int Nsize = size/2;
+    int* visited = malloc(sizeof(int)*Nsize*Nsize);
+    for (int i = 0; i < size*size/4; i++){
+        visited[i] = -1;
+    }
+    visited[0] = counter;
+
+    while (counter != 0){
+        int vois[] = {-1,-1,-1,-1};
+        if(py>0){vois[0]= px+py - Nsize;}
+        if(py<Nsize-1){vois[1]= px+py + Nsize;}
+        if(px>0){vois[2]= px+py - 1;}
+        if(px<Nsize-1){vois[3]= px+py + 1;}
+        int ash = (counter*157 + px*139 + seed*113)%4;
+        int move = -1;
+        for (int i = 0; i < 4; i++){
+            printf("%d", ash);
+            if(move == -1 || vois[ash] == -1){
+                ash = (ash+1)%4;
+            }else{
+                move = ash;
+            }
+        }
+        if(move == 0){
+            py -= 1;
+            visited[counter] = py*Nsize + px;
+            map[(py*2 +1)*Nsize + px*2] = 0;
+            counter++;
+        }
+        if(move == 1){
+            py += 1;
+            visited[counter] = py*Nsize + px;
+            map[(py*2 -1)*Nsize + px*2] = 0;
+            counter++;
+        }
+        if(move == 2){
+            px -= 1;
+            visited[counter] = py*Nsize + px;
+            map[(py*2)*Nsize + (px+1)*2] = 0;
+            counter++;
+        }
+        if(move == 3){
+            py += 1;
+            visited[counter] = py*Nsize + px;
+            map[(py*2)*Nsize + (px-1)*2] = 0;
+            counter++;
+        }
+        if(move == -1){
+            px = visited[counter-1]%Nsize;
+            py = visited[counter-1]/Nsize;
+            counter--;
+        }
+        
+    }
+    
+    free(visited);
     return;    
 }
 
-float* resetScreen(int Xsize, int Ysize){
-    printf("\x1b[2J");//for the renderer
+float* resetScreen(int Xsize, int Ysize, int renderType){
+    if(renderType == 1 ){
+        printf("\x1b[2J");//for the renderer
+    }
     float* arr = (float*)malloc(Ysize * Xsize * sizeof(float));
     for (int i = 0; i < Ysize*Xsize; i++) {
         arr[i] = 0.;        
