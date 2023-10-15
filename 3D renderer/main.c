@@ -6,7 +6,7 @@
 
 
 #define PI 3.1415926535
-#define seed 1156
+#define seed 185478
 
 void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize);
 void genMase(int* mase, int size);
@@ -26,9 +26,9 @@ void main(){
     int freq = 5000;
     int Ysize = 40;
     int Xsize = 140;
-    int renderType = 4;
+    int renderType = 2;
 
-    int Msize = 15;
+    int Msize = 11;
     int map[Msize*Msize];
     genMase(map, Msize);
     map[0] = 0;
@@ -179,8 +179,7 @@ void genMase(int* map, int size){
         }
     }
 
-    int finish = 0;
-    while (finish == 0){
+    while (mase[size*size -1] != mase[0]){
         int x = rand()%(size);
         int y;
         if(x%2 == 0){
@@ -193,7 +192,7 @@ void genMase(int* map, int size){
         int val2;
 
 
-        if(mase[y*size + x-1] == -1){
+        if(y%2==1){
             val1 = mase[(y-1)*size + x];
             val2 = mase[(y+1)*size + x];
         }else{
@@ -212,49 +211,7 @@ void genMase(int* map, int size){
                 }
             }
         }
-        int boool = 1;
-        for (int i = 0; i < size; i++){
-            for (int j = 0; j < size; j++){
-                if(mase[i*size + j] != mase[0]){
-                    boool = 0;
-                }
-            }
-        }
-        if(mase[size*size -1] == mase[0]){
-            finish = 1;
-        }
-        //finish = boool;
     }
-
-    printf("\n\n\n\n");
-    for (int i = 0; i < size; i++)
-    {
-        printf("#");
-        for (int j = 0; j < size; j++)
-        {
-            if(mase[i*size + j] == -1){
-                printf("@ ");
-            }else{
-                printf("%d ",mase[i*size + j]);
-            }
-        }printf("#");
-        printf("\n");
-    }
-    printf("\n\n\n\n");
-    for (int i = 0; i < size; i++)
-    {
-        printf("#");
-        for (int j = 0; j < size; j++)
-        {
-            if(map[i*size + j] == 0){
-                printf("  "); 
-            }else{
-                printf("%d ",map[i*size + j]);
-            }
-        }printf("#");
-        printf("\n");
-    }
-    
     free(mase);
 }
 
