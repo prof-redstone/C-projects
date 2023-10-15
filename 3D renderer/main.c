@@ -6,10 +6,11 @@
 
 
 #define PI 3.1415926535
-#define seed 1
+#define seed 1156
 
 void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize);
 void genMase(int* mase, int size);
+void genMase2(int* mase, int size);
 float* resetScreen(int Xsize, int Ysize, int renderType);
 float pixel(float x, float y , int time);
 void renderArray1(float* a, int Ysize, int Xsize);
@@ -27,7 +28,7 @@ void main(){
     int Xsize = 140;
     int renderType = 4;
 
-    int Msize = 14;
+    int Msize = 15;
     int map[Msize*Msize];
     genMase(map, Msize);
     map[0] = 0;
@@ -130,17 +131,21 @@ void main(){
             printf("\n\n\n\n");
             for (int i = 0; i < Msize; i++)
             {
+                printf("#");
                 for (int j = 0; j < Msize; j++)
                 {
-                    printf("%d",map[i*Msize + j]);
-                }
+                    if(map[i*Msize + j] == 0){
+                        printf(" ");
+                    }else{
+                        printf("%d",map[i*Msize + j]);
+                    }
+                }printf("#");
                 printf("\n");
             }
             
         }
-        if(renderType == 4){
-            //debug
-        }
+        if(renderType == 4){}
+
         time++;
         usleep(freq);
     }
@@ -162,7 +167,98 @@ void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize
     return;
 }
 
+
 void genMase(int* map, int size){
+    srand(seed);
+    int* mase = malloc(sizeof(int)*size*size);
+    int counter = 1;
+    for (int i = 0; i < size; i++){
+        for (int j = 0; j < size; j++){
+            mase[i*size + j] = (i%2==0&&j%2==0) ? counter++ : -1;
+            map[i*size + j] = (i%2==0&&j%2==0) ? 0 : 1;
+        }
+    }
+
+    int finish = 0;
+    while (finish == 0){
+        int x = rand()%(size);
+        int y;
+        if(x%2 == 0){
+            y = (rand()%(size/2))*2 +1;
+        }else{
+            y = (rand()%(size/2 +1 ))*2;
+        }
+        printf("%d %d\n",x,y);
+        int val1;
+        int val2;
+
+
+        if(mase[y*size + x-1] == -1){
+            val1 = mase[(y-1)*size + x];
+            val2 = mase[(y+1)*size + x];
+        }else{
+            val1 = mase[y*size + x-1];
+            val2 = mase[y*size + x+1];
+        }
+
+        if(val1 != val2){
+            map[y*size + x] = 0;
+            mase[y*size + x] = val1;
+            for (int i = 0; i < size; i++){
+                for (int j = 0; j < size; j++){
+                    if(mase[i*size + j] == val2){
+                        mase[i*size + j] = val1;
+                    }
+                }
+            }
+        }
+        int boool = 1;
+        for (int i = 0; i < size; i++){
+            for (int j = 0; j < size; j++){
+                if(mase[i*size + j] != mase[0]){
+                    boool = 0;
+                }
+            }
+        }
+        if(mase[size*size -1] == mase[0]){
+            finish = 1;
+        }
+        //finish = boool;
+    }
+
+    printf("\n\n\n\n");
+    for (int i = 0; i < size; i++)
+    {
+        printf("#");
+        for (int j = 0; j < size; j++)
+        {
+            if(mase[i*size + j] == -1){
+                printf("@ ");
+            }else{
+                printf("%d ",mase[i*size + j]);
+            }
+        }printf("#");
+        printf("\n");
+    }
+    printf("\n\n\n\n");
+    for (int i = 0; i < size; i++)
+    {
+        printf("#");
+        for (int j = 0; j < size; j++)
+        {
+            if(map[i*size + j] == 0){
+                printf("  "); 
+            }else{
+                printf("%d ",map[i*size + j]);
+            }
+        }printf("#");
+        printf("\n");
+    }
+    
+    free(mase);
+}
+
+void genMase2(int* map, int size){
     for (int i = 0; i < size; i++){
         for (int j = 0; j < size; j++){
             if(i%2 == 0 && j%2 ==0){
@@ -177,61 +273,78 @@ void genMase(int* map, int size){
     int py = 0;
     int counter = 1;
     int Nsize = size/2;
-    int* visited = malloc(sizeof(int)*Nsize*Nsize);
+    int* visited = malloc(sizeof(int)*Nsize*Nsize); // tableau qui compte la distance au depart
+    int* caseCount = malloc(sizeof(int)*Nsize*Nsize); // liste des cases depuis de depart
     for (int i = 0; i < size*size/4; i++){
         visited[i] = -1;
+        caseCount[-1] = -1;
     }
     visited[0] = counter;
+    caseCount[0] = 0;
 
-    while (counter != 0){
+    while (counter > 0){
         int vois[] = {-1,-1,-1,-1};
-        if(py>0){vois[0]= px+py - Nsize;}
-        if(py<Nsize-1){vois[1]= px+py + Nsize;}
-        if(px>0){vois[2]= px+py - 1;}
-        if(px<Nsize-1){vois[3]= px+py + 1;}
-        int ash = (counter*157 + px*139 + seed*113)%4;
+        if(py>0 && visited[(py-1)*Nsize + px]==-1){vois[0]= px+py - Nsize;}
+        if(py<Nsize-1 && visited[(py+1)*Nsize + px]==-1){vois[1]= px+py + Nsize;}
+        if(px>0 && visited[py*Nsize + (px-1)]==-1){vois[2]= px+py - 1;}
+        if(px<Nsize-1 && visited[py*Nsize + (px-1)]==-1){vois[3]= px+py + 1;}
+        int ash = (counter*157 + px*139 + py*794 + seed*113)%4;
         int move = -1;
         for (int i = 0; i < 4; i++){
-            printf("%d", ash);
-            if(move == -1 || vois[ash] == -1){
+            if(move == -1 && vois[ash] == -1){
                 ash = (ash+1)%4;
             }else{
                 move = ash;
             }
         }
+        printf("%d %d\n", py, px);
         if(move == 0){
             py -= 1;
-            visited[counter] = py*Nsize + px;
+            caseCount[counter] = py*Nsize + px;
+            visited[py*Nsize + px] = counter+1;
             map[(py*2 +1)*Nsize + px*2] = 0;
             counter++;
         }
         if(move == 1){
             py += 1;
-            visited[counter] = py*Nsize + px;
+            caseCount[counter] = py*Nsize + px;
+            visited[py*Nsize + px] = counter+1;
             map[(py*2 -1)*Nsize + px*2] = 0;
             counter++;
         }
         if(move == 2){
             px -= 1;
-            visited[counter] = py*Nsize + px;
+            caseCount[counter] = py*Nsize + px;
+            visited[py*Nsize + px] = counter+1;
             map[(py*2)*Nsize + (px+1)*2] = 0;
             counter++;
         }
         if(move == 3){
-            py += 1;
-            visited[counter] = py*Nsize + px;
+            px += 1;
+            caseCount[counter] = py*Nsize + px;
+            visited[py*Nsize + px] = counter+1;
             map[(py*2)*Nsize + (px-1)*2] = 0;
             counter++;
         }
         if(move == -1){
-            px = visited[counter-1]%Nsize;
-            py = visited[counter-1]/Nsize;
+            px = caseCount[counter-1]%Nsize;
+            py = caseCount[counter-1]/Nsize;
             counter--;
         }
-        
+    }
+
+    printf("\n\n\n\n");
+    for (int i = 0; i < Nsize; i++)
+    {
+        for (int j = 0; j < Nsize; j++)
+        {
+            printf("%d  ",map[i*Nsize + j]);
+        }
+        printf("\n");
     }
     
     free(visited);
+    free(caseCount);
     return;    
 }
 
