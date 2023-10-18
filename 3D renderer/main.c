@@ -10,9 +10,9 @@
 
 void collision(float* px, float* py, float* lpx, float* lpy, int* map, int Msize);
 void genMase(int* mase, int size);
-void genMase2(int* mase, int size);
 float* resetScreen(int Xsize, int Ysize, int renderType);
 float pixel(float x, float y , int time);
+void renderEnd();
 void renderArray1(float* a, int Ysize, int Xsize);
 void renderArray2(float* a, int Ysize, int Xsize);
 int clamp(int x,int a, int b);
@@ -28,31 +28,21 @@ void main(){
     int Xsize = 140;
     int renderType = 2;
 
-    int Msize = 11;
+    int askSize;
+    printf("Taille de la map : ");
+    scanf("%d", &askSize);
+    askSize += askSize%2==0 ? 1 : 0;
+
+    int Msize = askSize;
     int map[Msize*Msize];
     genMase(map, Msize);
     map[0] = 0;
 
-    // int map[] = {
-    //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,0,1,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,1,1,1,0,0,0,0,1,
-    //             1,0,1,1,0,0,0,0,0,0,0,0,0,1,
-    //             1,0,0,1,0,0,0,0,0,0,0,0,0,1,
-    //             1,0,0,1,0,0,1,0,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-    //             1,0,0,1,0,0,1,1,1,0,0,1,1,1,
-    //             1,0,0,1,0,0,1,0,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-    //             1,0,0,0,0,0,1,0,0,0,0,0,0,1,
-    //             1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-    //             };
 
     float pos[] = {0.5,0.5};
     float lastpos[] = {0.5,0.5};
     float angle = 0;
+    angle = map[Msize]==1 ? 0: 3.14/2;//pour pas demarrer face a un mur
     float delta = 0.2;
     float speed = 0.15*delta;
     float rotSpeed = 0.15*delta;
@@ -60,7 +50,7 @@ void main(){
     float* arrayImage = resetScreen(Xsize, Ysize, renderType);
 
     
-    while (1) {
+    while ((int)pos[0]!=Msize-1||(int)pos[1]!=Msize-1) {//case de fin
 
         if(GetAsyncKeyState(65)){
             Xsize += 1;
@@ -150,6 +140,7 @@ void main(){
         usleep(freq);
     }
 
+    renderEnd();
     free(arrayImage);
     return;
 }
@@ -215,95 +206,6 @@ void genMase(int* map, int size){
     free(mase);
 }
 
-void genMase2(int* map, int size){
-    for (int i = 0; i < size; i++){
-        for (int j = 0; j < size; j++){
-            if(i%2 == 0 && j%2 ==0){
-                map[i*size + j] = 0;
-            }else{
-                map[i*size + j] = 1;
-            }
-        }
-    }
-
-    int px = 0;
-    int py = 0;
-    int counter = 1;
-    int Nsize = size/2;
-    int* visited = malloc(sizeof(int)*Nsize*Nsize); // tableau qui compte la distance au depart
-    int* caseCount = malloc(sizeof(int)*Nsize*Nsize); // liste des cases depuis de depart
-    for (int i = 0; i < size*size/4; i++){
-        visited[i] = -1;
-        caseCount[-1] = -1;
-    }
-    visited[0] = counter;
-    caseCount[0] = 0;
-
-    while (counter > 0){
-        int vois[] = {-1,-1,-1,-1};
-        if(py>0 && visited[(py-1)*Nsize + px]==-1){vois[0]= px+py - Nsize;}
-        if(py<Nsize-1 && visited[(py+1)*Nsize + px]==-1){vois[1]= px+py + Nsize;}
-        if(px>0 && visited[py*Nsize + (px-1)]==-1){vois[2]= px+py - 1;}
-        if(px<Nsize-1 && visited[py*Nsize + (px-1)]==-1){vois[3]= px+py + 1;}
-        int ash = (counter*157 + px*139 + py*794 + seed*113)%4;
-        int move = -1;
-        for (int i = 0; i < 4; i++){
-            if(move == -1 && vois[ash] == -1){
-                ash = (ash+1)%4;
-            }else{
-                move = ash;
-            }
-        }
-        printf("%d %d\n", py, px);
-        if(move == 0){
-            py -= 1;
-            caseCount[counter] = py*Nsize + px;
-            visited[py*Nsize + px] = counter+1;
-            map[(py*2 +1)*Nsize + px*2] = 0;
-            counter++;
-        }
-        if(move == 1){
-            py += 1;
-            caseCount[counter] = py*Nsize + px;
-            visited[py*Nsize + px] = counter+1;
-            map[(py*2 -1)*Nsize + px*2] = 0;
-            counter++;
-        }
-        if(move == 2){
-            px -= 1;
-            caseCount[counter] = py*Nsize + px;
-            visited[py*Nsize + px] = counter+1;
-            map[(py*2)*Nsize + (px+1)*2] = 0;
-            counter++;
-        }
-        if(move == 3){
-            px += 1;
-            caseCount[counter] = py*Nsize + px;
-            visited[py*Nsize + px] = counter+1;
-            map[(py*2)*Nsize + (px-1)*2] = 0;
-            counter++;
-        }
-        if(move == -1){
-            px = caseCount[counter-1]%Nsize;
-            py = caseCount[counter-1]/Nsize;
-            counter--;
-        }
-    }
-
-    printf("\n\n\n\n");
-    for (int i = 0; i < Nsize; i++)
-    {
-        for (int j = 0; j < Nsize; j++)
-        {
-            printf("%d  ",map[i*Nsize + j]);
-        }
-        printf("\n");
-    }
-    
-    free(visited);
-    free(caseCount);
-    return;    
-}
 
 float* resetScreen(int Xsize, int Ysize, int renderType){
     if(renderType == 1 ){
@@ -367,8 +269,8 @@ float game(float x, float y , int time, int map[], int Msize, float pos[], float
             ylen += yUnitStepSize;
         }
 
-        if(xMapCheck >= 0 && xMapCheck < Msize && yMapCheck >= 0 && yMapCheck < Msize){
-            if(map[yMapCheck*Msize + xMapCheck] == 1){
+        if(xMapCheck >= 0 && xMapCheck < Msize && yMapCheck >= 0 && yMapCheck < Msize){//si dans les limites de la map
+            if(map[yMapCheck*Msize + xMapCheck] == 1){//si mur
                 found = 1;
             }
         }else{
@@ -377,34 +279,61 @@ float game(float x, float y , int time, int map[], int Msize, float pos[], float
         
     }
     
-    float xIntersect;
+    float xIntersect;//point de collision du ray
     float yIntersect;
     if(found){
         xIntersect = x0 + xDir*fdist;
         yIntersect = y0 + yDir*fdist;
     }
 
-    float col = 0;
-    if(xIntersect - floor(xIntersect) < 0.0001 || xIntersect - ceil(xIntersect) > -0.0001){
-        if(xDir>0){
-            col = 0.7;
-        }else{
-            col = 0.7;
-        }
-    }else{
-        if(yDir>0){
-            col = 0.9;
-        }else{
-            col = 0.9;
-        }
-    }
+    
 
-    float h = 0.5;
+    float h = 0.2;
 
     if(fabs(tan(y-0.5))*(fdist*cos((x-0.5)*FOV)) < h){
-        return col;
-        //fdist/3.
+        if(xIntersect - floor(xIntersect) < 0.0001 || xIntersect - ceil(xIntersect) > -0.0001){
+            if(xDir>0){
+                return 0.7;//la couleur en fonction de l'orientation des murs
+            }else{
+                return 0.7;
+            }
+        }else{
+            if(yDir>0){
+                return 0.9;
+            }else{
+                return 0.9;
+            }
+        }
     }else{
+        if(y-0.5 > 0){//le sol
+            float distGround = h/(tan(y-0.5)*cos((x-0.5)*FOV));
+            float xGround = x0 + xDir*distGround;
+            float yGround = y0 + yDir*distGround;
+            float xInCell = xGround - (int)xGround;
+            float yInCell = yGround - (int)yGround;
+
+            if((int)(xGround) == 0 && (int)(yGround) == 0){//case de depart
+                if(fabs(xInCell-0.5)< (float)(time%50)/100. && fabs(yInCell-0.5)< (float)(time%50)/100){
+                    return 0.95;
+                }else{
+                    return 0.2;
+                }
+            }
+
+            if((int)(xGround) == Msize-1 && (int)(yGround) == Msize-1){//case de arrive
+                if(fabs(xInCell-0.5)< 0.5-(float)(time%50)/100. && fabs(yInCell-0.5)< 0.5-(float)(time%50)/100){
+                    return 0.95;
+                }else{
+                    return 0.2;
+                }
+            }
+
+            if(((int)(xGround)+(int)(yGround))%2==0){//damier sur le sol
+                return 0.1;
+            }else{
+                return 0;
+            }
+        }
         return 0.;
     }
 
@@ -429,6 +358,24 @@ float ball(float x, float y , int time){
 
 float degrade(float x, float y , int time){
     return mod(x/2.+(float)(time%100)/100. + y/2., 1.0);
+}
+
+void renderEnd(){
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    char G[]= {
+        ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','\n',
+        ' ',' ',' ',' ',' ',' ','#','#','#','#','#','#',' ',' ',' ','#','#','#','#','#','#','\n',
+        ' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ','\n',
+        ' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ','\n',
+        ' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ',' ','#','#',' ',' ',' ',' ',' ',' ','\n',
+        ' ',' ',' ',' ','#','#',' ',' ','#','#','#','#',' ','#','#',' ',' ','#','#','#','#','\n',
+        ' ',' ',' ',' ','#','#',' ',' ',' ',' ','#','#',' ','#','#',' ',' ',' ',' ','#','#','\n',
+        ' ',' ',' ',' ','#','#',' ',' ',' ',' ','#','#',' ','#','#',' ',' ',' ',' ','#','#','\n',
+        ' ',' ',' ',' ',' ',' ','#','#','#','#','#','#',' ',' ',' ','#','#','#','#','#','#','\n',
+        ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ','\n'
+    };
+    printf(G);
+    printf("\n\n\n\n");
 }
 
 
